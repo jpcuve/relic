@@ -15,12 +15,13 @@ def create_app() -> Flask:
     app.config.from_object('config')
     if CONFIGURATION_LOCATION in os.environ.keys():  # if FLASK_CONFIG defined in environment
         app.config.from_envvar(CONFIGURATION_LOCATION)  # then overwrite flask.config from that file
-    app.development = os.environ.get('FLASK_ENV') == 'development'
-    if app.development:
-        CORS(app)
+    print(f'!!!: {app.debug}')
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',
-                        level=logging.DEBUG if app.development else logging.INFO)
+                        level=logging.DEBUG if app.debug else logging.INFO)
     # from here on log using app.logger (or 'current_app.logger' in the context of a http request)
+    app.logger.info(f"Debug? {app.debug}")
+    if app.debug:
+        CORS(app)
     app.logger.info(f"Should we use the cloud? {app.config['CLOUD']}")
 
     # db initilization (this is going to use the SQL_ALCHEMY_... variables from the configuration)
@@ -29,9 +30,13 @@ def create_app() -> Flask:
     from relic.database import db
     db.init_app(app)
 
+    # blueprint initializations (API endpoints, one file per version)
+    from relic import api
+    app.register_blueprint(api.bp)
+
     # the following setup code is when we are in development mode only, with an in memory database
     # in that case, create tables and fill them with test data
-    if app.development:
+    if app.debug:
         db.create_all()
         with db.engine.connect() as connection:
             res = next(connection.execute('select count(*) from users'))

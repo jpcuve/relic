@@ -14,6 +14,7 @@ const DrouotView: FC = () => {
       <form onSubmit={handleSubmit} action="https://drouot.com" noValidate>
         <button type="submit">Go</button>
       </form>
+      <button onClick={() => fetch('http://127.0.0.1:5000/api/drouot')}>Drouot on server</button>
     </div>
   )
 }
